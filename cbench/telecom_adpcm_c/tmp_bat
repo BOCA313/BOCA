@@ -1,0 +1,1 @@
+time ./a.out < ../../telecom_data/1.pcm > output_large.adpcm

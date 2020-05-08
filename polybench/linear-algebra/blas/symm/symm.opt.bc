@@ -1,0 +1,354 @@
+; ModuleID = '../../polybench/linear-algebra/blas/symm/symm.bc'
+target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
+target triple = "x86_64-unknown-linux-gnu"
+
+%struct._IO_FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct._IO_FILE*, i32, i32, i64, i16, i8, [1 x i8], i8*, i64, i8*, i8*, i8*, i8*, i64, i32, [20 x i8] }
+%struct._IO_marker = type { %struct._IO_marker*, %struct._IO_FILE*, i32 }
+
+@.str = private unnamed_addr constant [1 x i8] zeroinitializer
+@stderr = external global %struct._IO_FILE*
+@.str1 = private unnamed_addr constant [23 x i8] c"==BEGIN DUMP_ARRAYS==\0A\00"
+@.str2 = private unnamed_addr constant [15 x i8] c"begin dump: %s\00"
+@.str3 = private unnamed_addr constant [2 x i8] c"C\00"
+@.str4 = private unnamed_addr constant [2 x i8] c"\0A\00"
+@.str5 = private unnamed_addr constant [8 x i8] c"%0.2lf \00"
+@.str6 = private unnamed_addr constant [17 x i8] c"\0Aend   dump: %s\0A\00"
+@.str7 = private unnamed_addr constant [23 x i8] c"==END   DUMP_ARRAYS==\0A\00"
+
+define i32 @main(i32 %argc, i8** %argv) nounwind {
+entry:
+  %alpha = alloca double, align 8
+  %beta = alloca double, align 8
+  %call = call i8* @polybench_alloc_data(i64 1200000, i32 8) nounwind
+  %call1 = call i8* @polybench_alloc_data(i64 1000000, i32 8) nounwind
+  %call2 = call i8* @polybench_alloc_data(i64 1200000, i32 8) nounwind
+  %arraydecay = bitcast i8* %call to [1200 x double]*
+  %arraydecay6 = bitcast i8* %call1 to [1000 x double]*
+  %arraydecay8 = bitcast i8* %call2 to [1200 x double]*
+  call void @init_array(i32 1000, i32 1200, double* %alpha, double* %beta, [1200 x double]* %arraydecay, [1000 x double]* %arraydecay6, [1200 x double]* %arraydecay8)
+  %tmp11 = load double* %alpha, align 8
+  %tmp12 = load double* %beta, align 8
+  call void @kernel_symm(i32 1000, i32 1200, double %tmp11, double %tmp12, [1200 x double]* %arraydecay, [1000 x double]* %arraydecay6, [1200 x double]* %arraydecay8)
+  %cmp = icmp sgt i32 %argc, 42
+  br i1 %cmp, label %land.lhs.true, label %if.end
+
+land.lhs.true:                                    ; preds = %entry
+  %tmp21 = load i8** %argv, align 8
+  %call22 = call i32 @strcmp(i8* %tmp21, i8* getelementptr inbounds ([1 x i8]* @.str, i64 0, i64 0)) nounwind readonly
+  %tobool = icmp eq i32 %call22, 0
+  br i1 %tobool, label %if.then, label %if.end
+
+if.then:                                          ; preds = %land.lhs.true
+  call void @print_array(i32 1000, i32 1200, [1200 x double]* %arraydecay)
+  br label %if.end
+
+if.end:                                           ; preds = %land.lhs.true, %if.then, %entry
+  call void @free(i8* %call) nounwind
+  call void @free(i8* %call1) nounwind
+  call void @free(i8* %call2) nounwind
+  ret i32 0
+}
+
+declare i8* @polybench_alloc_data(i64, i32)
+
+define internal void @init_array(i32 %m, i32 %n, double* %alpha, double* %beta, [1200 x double]* %C, [1000 x double]* %A, [1200 x double]* %B) nounwind {
+entry:
+  store double 1.500000e+00, double* %alpha, align 8
+  store double 1.200000e+00, double* %beta, align 8
+  %cmp16 = icmp sgt i32 %m, 0
+  br i1 %cmp16, label %for.cond4.preheader.lr.ph, label %for.cond39.preheader
+
+for.cond4.preheader.lr.ph:                        ; preds = %entry
+  %cmp714 = icmp sgt i32 %n, 0
+  br i1 %cmp714, label %for.cond4.preheader.lr.ph.split.us, label %for.cond4.preheader.lr.ph.for.cond4.preheader.lr.ph.split_crit_edge
+
+for.cond4.preheader.lr.ph.for.cond4.preheader.lr.ph.split_crit_edge: ; preds = %for.cond4.preheader.lr.ph
+  br label %for.cond.for.cond39.preheader_crit_edge
+
+for.cond4.preheader.lr.ph.split.us:               ; preds = %for.cond4.preheader.lr.ph
+  %tmp = zext i32 %n to i64
+  %tmp27 = zext i32 %m to i64
+  br label %for.cond4.preheader.us
+
+for.cond4.preheader.us:                           ; preds = %for.inc35.us, %for.cond4.preheader.lr.ph.split.us
+  %indvar19 = phi i64 [ %indvar.next20, %for.inc35.us ], [ 0, %for.cond4.preheader.lr.ph.split.us ]
+  %tmp33 = add i64 %tmp, %indvar19
+  br i1 true, label %for.body8.lr.ph.us, label %for.inc35.us
+
+for.inc35.us:                                     ; preds = %for.cond4.for.inc35_crit_edge.us, %for.cond4.preheader.us
+  %indvar.next20 = add i64 %indvar19, 1
+  %exitcond28 = icmp eq i64 %indvar.next20, %tmp27
+  br i1 %exitcond28, label %for.cond.for.cond39.preheader_crit_edge.us-lcssa.us, label %for.cond4.preheader.us
+
+for.body8.us:                                     ; preds = %for.body8.us, %for.body8.lr.ph.us
+  %indvar = phi i64 [ 0, %for.body8.lr.ph.us ], [ %indvar.next, %for.body8.us ]
+  %tmp29 = add i64 %indvar19, %indvar
+  %add.us = trunc i64 %tmp29 to i32
+  %arrayidx17.us = getelementptr [1200 x double]* %C, i64 %indvar19, i64 %indvar
+  %tmp34 = sub i64 %tmp33, %indvar
+  %sub.us = trunc i64 %tmp34 to i32
+  %arrayidx33.us = getelementptr [1200 x double]* %B, i64 %indvar19, i64 %indvar
+  %rem.us = srem i32 %add.us, 100
+  %conv.us = sitofp i32 %rem.us to double
+  %conv12.us = sitofp i32 %m to double
+  %div.us = fdiv double %conv.us, %conv12.us
+  store double %div.us, double* %arrayidx17.us, align 8
+  %rem22.us = srem i32 %sub.us, 100
+  %conv23.us = sitofp i32 %rem22.us to double
+  %div26.us = fdiv double %conv23.us, %conv12.us
+  store double %div26.us, double* %arrayidx33.us, align 8
+  %indvar.next = add i64 %indvar, 1
+  %exitcond = icmp eq i64 %indvar.next, %tmp
+  br i1 %exitcond, label %for.cond4.for.inc35_crit_edge.us, label %for.body8.us
+
+for.body8.lr.ph.us:                               ; preds = %for.cond4.preheader.us
+  br label %for.body8.us
+
+for.cond4.for.inc35_crit_edge.us:                 ; preds = %for.body8.us
+  br label %for.inc35.us
+
+for.cond.for.cond39.preheader_crit_edge.us-lcssa.us: ; preds = %for.inc35.us
+  br label %for.cond.for.cond39.preheader_crit_edge
+
+for.cond.for.cond39.preheader_crit_edge:          ; preds = %for.cond.for.cond39.preheader_crit_edge.us-lcssa.us, %for.cond4.preheader.lr.ph.for.cond4.preheader.lr.ph.split_crit_edge
+  br label %for.cond39.preheader
+
+for.cond39.preheader:                             ; preds = %for.cond.for.cond39.preheader_crit_edge, %entry
+  br i1 %cmp16, label %for.cond45.preheader.lr.ph, label %for.end92
+
+for.cond45.preheader.lr.ph:                       ; preds = %for.cond39.preheader
+  %tmp51 = add i32 %m, -2
+  %tmp61 = zext i32 %m to i64
+  %tmp67 = zext i32 %tmp51 to i64
+  br label %for.cond45.preheader
+
+for.cond45.preheader:                             ; preds = %for.inc89, %for.cond45.preheader.lr.ph
+  %indvar44 = phi i64 [ 0, %for.cond45.preheader.lr.ph ], [ %tmp72, %for.inc89 ]
+  %tmp63 = mul i64 %indvar44, 1001
+  %tmp64 = add i64 %tmp63, 1
+  %tmp68 = sub i64 %tmp67, %indvar44
+  %tmp72 = add i64 %indvar44, 1
+  %add71 = trunc i64 %tmp72 to i32
+  %tmp55 = and i64 %tmp68, 4294967295
+  %tmp56 = add i64 %tmp55, 1
+  %tmp39 = icmp sgt i32 %add71, 1
+  %add71.op = add i32 %add71, -1
+  %0 = zext i32 %add71.op to i64
+  %.op = add i64 %0, 1
+  %tmp42 = select i1 %tmp39, i64 %.op, i64 1
+  br i1 true, label %for.body50.lr.ph, label %for.end69
+
+for.body50.lr.ph:                                 ; preds = %for.cond45.preheader
+  br label %for.body50
+
+for.body50:                                       ; preds = %for.body50, %for.body50.lr.ph
+  %indvar36 = phi i64 [ %indvar.next37, %for.body50 ], [ 0, %for.body50.lr.ph ]
+  %arrayidx65 = getelementptr [1000 x double]* %A, i64 %indvar44, i64 %indvar36
+  %tmp70 = add i64 %indvar44, %indvar36
+  %add53 = trunc i64 %tmp70 to i32
+  %rem54 = srem i32 %add53, 100
+  %conv55 = sitofp i32 %rem54 to double
+  %conv57 = sitofp i32 %m to double
+  %div58 = fdiv double %conv55, %conv57
+  store double %div58, double* %arrayidx65, align 8
+  %indvar.next37 = add i64 %indvar36, 1
+  %exitcond43 = icmp eq i64 %indvar.next37, %tmp42
+  br i1 %exitcond43, label %for.cond45.for.end69_crit_edge, label %for.body50
+
+for.cond45.for.end69_crit_edge:                   ; preds = %for.body50
+  br label %for.end69
+
+for.end69:                                        ; preds = %for.cond45.for.end69_crit_edge, %for.cond45.preheader
+  %cmp758 = icmp slt i32 %add71, %m
+  br i1 %cmp758, label %for.body77.lr.ph, label %for.inc89
+
+for.body77.lr.ph:                                 ; preds = %for.end69
+  br label %for.body77
+
+for.body77:                                       ; preds = %for.body77, %for.body77.lr.ph
+  %indvar48 = phi i64 [ 0, %for.body77.lr.ph ], [ %indvar.next49, %for.body77 ]
+  %tmp65 = add i64 %tmp64, %indvar48
+  %arrayidx84 = getelementptr [1000 x double]* %A, i64 0, i64 %tmp65
+  store double -9.990000e+02, double* %arrayidx84, align 8
+  %indvar.next49 = add i64 %indvar48, 1
+  %exitcond57 = icmp eq i64 %indvar.next49, %tmp56
+  br i1 %exitcond57, label %for.cond72.for.inc89_crit_edge, label %for.body77
+
+for.cond72.for.inc89_crit_edge:                   ; preds = %for.body77
+  br label %for.inc89
+
+for.inc89:                                        ; preds = %for.cond72.for.inc89_crit_edge, %for.end69
+  %exitcond62 = icmp eq i64 %tmp72, %tmp61
+  br i1 %exitcond62, label %for.cond39.for.end92_crit_edge, label %for.cond45.preheader
+
+for.cond39.for.end92_crit_edge:                   ; preds = %for.inc89
+  br label %for.end92
+
+for.end92:                                        ; preds = %for.cond39.for.end92_crit_edge, %for.cond39.preheader
+  ret void
+}
+
+define internal void @kernel_symm(i32 %m, i32 %n, double %alpha, double %beta, [1200 x double]* %C, [1000 x double]* %A, [1200 x double]* %B) nounwind {
+entry:
+  %cmp11 = icmp sgt i32 %m, 0
+  br i1 %cmp11, label %for.cond2.preheader.lr.ph, label %for.end104
+
+for.cond2.preheader.lr.ph:                        ; preds = %entry
+  %cmp58 = icmp sgt i32 %n, 0
+  %tmp = zext i32 %n to i64
+  %tmp19 = zext i32 %m to i64
+  br label %for.cond2.preheader
+
+for.cond2.preheader:                              ; preds = %for.inc101, %for.cond2.preheader.lr.ph
+  %idxprom77 = phi i64 [ 0, %for.cond2.preheader.lr.ph ], [ %indvar.next15, %for.inc101 ]
+  %tmp22 = mul i64 %idxprom77, 1001
+  %arrayidx82 = getelementptr [1000 x double]* %A, i64 0, i64 %tmp22
+  br i1 %cmp58, label %for.cond7.preheader.lr.ph, label %for.inc101
+
+for.cond7.preheader.lr.ph:                        ; preds = %for.cond2.preheader
+  %inc103112 = trunc i64 %idxprom77 to i32
+  %cmp105 = icmp sgt i32 %inc103112, 0
+  br label %for.cond7.preheader
+
+for.cond7.preheader:                              ; preds = %for.end, %for.cond7.preheader.lr.ph
+  %indvar16 = phi i64 [ 0, %for.cond7.preheader.lr.ph ], [ %indvar.next17, %for.end ]
+  %arrayidx17 = getelementptr [1200 x double]* %B, i64 %idxprom77, i64 %indvar16
+  %arrayidx96 = getelementptr [1200 x double]* %C, i64 %idxprom77, i64 %indvar16
+  br i1 %cmp105, label %for.body11.lr.ph, label %for.end
+
+for.body11.lr.ph:                                 ; preds = %for.cond7.preheader
+  br label %for.body11
+
+for.body11:                                       ; preds = %for.body11, %for.body11.lr.ph
+  %indvar = phi i64 [ 0, %for.body11.lr.ph ], [ %indvar.next, %for.body11 ]
+  %tmp8746 = phi double [ 0.000000e+00, %for.body11.lr.ph ], [ %add54, %for.body11 ]
+  %arrayidx50 = getelementptr [1000 x double]* %A, i64 %idxprom77, i64 %indvar
+  %arrayidx42 = getelementptr [1200 x double]* %B, i64 %indvar, i64 %indvar16
+  %arrayidx34 = getelementptr [1200 x double]* %C, i64 %indvar, i64 %indvar16
+  %tmp18 = load double* %arrayidx17, align 8
+  %mul = fmul double %tmp18, %alpha
+  %tmp26 = load double* %arrayidx50, align 8
+  %mul27 = fmul double %mul, %tmp26
+  %tmp35 = load double* %arrayidx34, align 8
+  %add = fadd double %tmp35, %mul27
+  store double %add, double* %arrayidx34, align 8
+  %tmp43 = load double* %arrayidx42, align 8
+  %tmp51 = load double* %arrayidx50, align 8
+  %mul52 = fmul double %tmp43, %tmp51
+  %add54 = fadd double %tmp8746, %mul52
+  %indvar.next = add i64 %indvar, 1
+  %exitcond = icmp eq i64 %indvar.next, %idxprom77
+  br i1 %exitcond, label %for.cond7.for.end_crit_edge, label %for.body11
+
+for.cond7.for.end_crit_edge:                      ; preds = %for.body11
+  br label %for.end
+
+for.end:                                          ; preds = %for.cond7.for.end_crit_edge, %for.cond7.preheader
+  %tmp874.lcssa = phi double [ %add54, %for.cond7.for.end_crit_edge ], [ 0.000000e+00, %for.cond7.preheader ]
+  %tmp64 = load double* %arrayidx96, align 8
+  %mul65 = fmul double %tmp64, %beta
+  %tmp74 = load double* %arrayidx17, align 8
+  %mul75 = fmul double %tmp74, %alpha
+  %tmp83 = load double* %arrayidx82, align 8
+  %mul84 = fmul double %mul75, %tmp83
+  %add85 = fadd double %mul65, %mul84
+  %mul88 = fmul double %tmp874.lcssa, %alpha
+  %add89 = fadd double %add85, %mul88
+  store double %add89, double* %arrayidx96, align 8
+  %indvar.next17 = add i64 %indvar16, 1
+  %exitcond18 = icmp eq i64 %indvar.next17, %tmp
+  br i1 %exitcond18, label %for.cond2.for.inc101_crit_edge, label %for.cond7.preheader
+
+for.cond2.for.inc101_crit_edge:                   ; preds = %for.end
+  br label %for.inc101
+
+for.inc101:                                       ; preds = %for.cond2.for.inc101_crit_edge, %for.cond2.preheader
+  %indvar.next15 = add i64 %idxprom77, 1
+  %exitcond20 = icmp eq i64 %indvar.next15, %tmp19
+  br i1 %exitcond20, label %for.cond.for.end104_crit_edge, label %for.cond2.preheader
+
+for.cond.for.end104_crit_edge:                    ; preds = %for.inc101
+  br label %for.end104
+
+for.end104:                                       ; preds = %for.cond.for.end104_crit_edge, %entry
+  ret void
+}
+
+declare i32 @strcmp(i8*, i8*) nounwind readonly
+
+define internal void @print_array(i32 %m, i32 %n, [1200 x double]* %C) nounwind {
+entry:
+  %tmp = load %struct._IO_FILE** @stderr, align 8
+  %call = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %tmp, i8* getelementptr inbounds ([23 x i8]* @.str1, i64 0, i64 0)) nounwind
+  %tmp1 = load %struct._IO_FILE** @stderr, align 8
+  %call2 = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %tmp1, i8* getelementptr inbounds ([15 x i8]* @.str2, i64 0, i64 0), i8* getelementptr inbounds ([2 x i8]* @.str3, i64 0, i64 0)) nounwind
+  %cmp5 = icmp sgt i32 %m, 0
+  br i1 %cmp5, label %for.cond5.preheader.lr.ph, label %for.end28
+
+for.cond5.preheader.lr.ph:                        ; preds = %entry
+  %cmp83 = icmp sgt i32 %n, 0
+  br i1 %cmp83, label %for.cond5.preheader.lr.ph.split.us, label %for.cond5.preheader.lr.ph.for.cond5.preheader.lr.ph.split_crit_edge
+
+for.cond5.preheader.lr.ph.for.cond5.preheader.lr.ph.split_crit_edge: ; preds = %for.cond5.preheader.lr.ph
+  br label %for.cond.for.end28_crit_edge
+
+for.cond5.preheader.lr.ph.split.us:               ; preds = %for.cond5.preheader.lr.ph
+  %tmp7 = zext i32 %n to i64
+  %tmp14 = zext i32 %m to i64
+  br label %for.cond5.preheader.us
+
+for.cond5.preheader.us:                           ; preds = %for.inc25.us, %for.cond5.preheader.lr.ph.split.us
+  %indvar8 = phi i64 [ %indvar.next9, %for.inc25.us ], [ 0, %for.cond5.preheader.lr.ph.split.us ]
+  %tmp16 = mul i64 %tmp14, %indvar8
+  br i1 true, label %for.body9.lr.ph.us, label %for.inc25.us
+
+for.inc25.us:                                     ; preds = %for.cond5.for.inc25_crit_edge.us, %for.cond5.preheader.us
+  %indvar.next9 = add i64 %indvar8, 1
+  %exitcond15 = icmp eq i64 %indvar.next9, %tmp14
+  br i1 %exitcond15, label %for.cond.for.end28_crit_edge.us-lcssa.us, label %for.cond5.preheader.us
+
+if.end.us:                                        ; preds = %if.then.us, %for.body9.us
+  %tmp16.us = load %struct._IO_FILE** @stderr, align 8
+  %tmp22.us = load double* %arrayidx21.us, align 8
+  %call23.us = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %tmp16.us, i8* getelementptr inbounds ([8 x i8]* @.str5, i64 0, i64 0), double %tmp22.us) nounwind
+  %indvar.next = add i64 %indvar, 1
+  %exitcond = icmp eq i64 %indvar.next, %tmp7
+  br i1 %exitcond, label %for.cond5.for.inc25_crit_edge.us, label %for.body9.us
+
+for.body9.us:                                     ; preds = %if.end.us, %for.body9.lr.ph.us
+  %indvar = phi i64 [ 0, %for.body9.lr.ph.us ], [ %indvar.next, %if.end.us ]
+  %arrayidx21.us = getelementptr [1200 x double]* %C, i64 %indvar8, i64 %indvar
+  %tmp17 = add i64 %tmp16, %indvar
+  %add.us = trunc i64 %tmp17 to i32
+  %rem.us = srem i32 %add.us, 20
+  %cmp13.us = icmp eq i32 %rem.us, 0
+  br i1 %cmp13.us, label %if.then.us, label %if.end.us
+
+if.then.us:                                       ; preds = %for.body9.us
+  %tmp14.us = load %struct._IO_FILE** @stderr, align 8
+  %call15.us = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %tmp14.us, i8* getelementptr inbounds ([2 x i8]* @.str4, i64 0, i64 0)) nounwind
+  br label %if.end.us
+
+for.body9.lr.ph.us:                               ; preds = %for.cond5.preheader.us
+  br label %for.body9.us
+
+for.cond5.for.inc25_crit_edge.us:                 ; preds = %if.end.us
+  br label %for.inc25.us
+
+for.cond.for.end28_crit_edge.us-lcssa.us:         ; preds = %for.inc25.us
+  br label %for.cond.for.end28_crit_edge
+
+for.cond.for.end28_crit_edge:                     ; preds = %for.cond.for.end28_crit_edge.us-lcssa.us, %for.cond5.preheader.lr.ph.for.cond5.preheader.lr.ph.split_crit_edge
+  br label %for.end28
+
+for.end28:                                        ; preds = %for.cond.for.end28_crit_edge, %entry
+  %tmp29 = load %struct._IO_FILE** @stderr, align 8
+  %call30 = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %tmp29, i8* getelementptr inbounds ([17 x i8]* @.str6, i64 0, i64 0), i8* getelementptr inbounds ([2 x i8]* @.str3, i64 0, i64 0)) nounwind
+  %tmp31 = load %struct._IO_FILE** @stderr, align 8
+  %call32 = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %tmp31, i8* getelementptr inbounds ([23 x i8]* @.str7, i64 0, i64 0)) nounwind
+  ret void
+}
+
+declare void @free(i8*) nounwind
+
+declare i32 @fprintf(%struct._IO_FILE*, i8*, ...)

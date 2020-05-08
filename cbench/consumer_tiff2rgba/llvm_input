@@ -1,0 +1,11 @@
+population_size    = 1
+problem_size       = 64
+max_generations    = 120
+replacement        = 0
+tournament_size    = 1
+
+bisection          = 0
+num_bisection_runs = 0
+
+quiet_mode         = 0
+verbose_mode       = 0

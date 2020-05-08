@@ -1,0 +1,97 @@
+; ModuleID = 'rawcaudio.bc'
+target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
+target triple = "x86_64-unknown-linux-gnu"
+
+%struct._IO_FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct._IO_FILE*, i32, i32, i64, i16, i8, [1 x i8], i8*, i64, i8*, i8*, i8*, i8*, i64, i32, [20 x i8] }
+%struct._IO_marker = type { %struct._IO_marker*, %struct._IO_FILE*, i32 }
+%struct.adpcm_state = type { i16, i8 }
+
+@.str = private unnamed_addr constant [15 x i8] c"_finfo_dataset\00"
+@.str1 = private unnamed_addr constant [3 x i8] c"rt\00"
+@stderr = external global %struct._IO_FILE*
+@.str2 = private unnamed_addr constant [29 x i8] c"\0AError: Can't find dataset!\0A\00"
+@.str3 = private unnamed_addr constant [4 x i8] c"%ld\00"
+@state = common global %struct.adpcm_state zeroinitializer, align 4
+@sbuf = common global [1000 x i16] zeroinitializer, align 16
+@.str4 = private unnamed_addr constant [11 x i8] c"input file\00"
+@abuf = common global [500 x i8] zeroinitializer, align 16
+
+define i32 @main() nounwind {
+entry:
+  %loop_wrap2 = alloca i64, align 8
+  %call = call %struct._IO_FILE* @fopen(i8* getelementptr inbounds ([15 x i8]* @.str, i64 0, i64 0), i8* getelementptr inbounds ([3 x i8]* @.str1, i64 0, i64 0)) nounwind
+  %cmp = icmp eq %struct._IO_FILE* %call, null
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:                                          ; preds = %entry
+  %tmp = load %struct._IO_FILE** @stderr, align 8
+  %0 = call i64 @fwrite(i8* getelementptr inbounds ([29 x i8]* @.str2, i64 0, i64 0), i64 28, i64 1, %struct._IO_FILE* %tmp)
+  call void @exit(i32 1) noreturn
+  unreachable
+
+if.end:                                           ; preds = %entry
+  %call3 = call i32 (%struct._IO_FILE*, i8*, ...)* @__isoc99_fscanf(%struct._IO_FILE* %call, i8* getelementptr inbounds ([4 x i8]* @.str3, i64 0, i64 0), i64* %loop_wrap2) nounwind
+  %call5 = call i32 @fclose(%struct._IO_FILE* %call) nounwind
+  br label %while.body
+
+while.body:                                       ; preds = %for.end, %if.end
+  %srcval1 = load i32* bitcast (%struct.adpcm_state* @state to i32*), align 4
+  %call8 = call i64 @read(i32 0, i8* bitcast ([1000 x i16]* @sbuf to i8*), i64 2000) nounwind
+  %conv = trunc i64 %call8 to i32
+  %cmp10 = icmp slt i32 %conv, 0
+  br i1 %cmp10, label %if.then12, label %if.end13
+
+if.then12:                                        ; preds = %while.body
+  call void @perror(i8* getelementptr inbounds ([11 x i8]* @.str4, i64 0, i64 0)) nounwind
+  call void @exit(i32 1) noreturn
+  unreachable
+
+if.end13:                                         ; preds = %while.body
+  %cmp15 = icmp eq i32 %conv, 0
+  br i1 %cmp15, label %while.end, label %for.cond.preheader
+
+for.cond.preheader:                               ; preds = %if.end13
+  %tmp202 = load i64* %loop_wrap2, align 8
+  %cmp213 = icmp sgt i64 %tmp202, 0
+  br i1 %cmp213, label %for.body.lr.ph, label %for.end
+
+for.body.lr.ph:                                   ; preds = %for.cond.preheader
+  %div = sdiv i32 %conv, 2
+  br label %for.body
+
+for.body:                                         ; preds = %for.body.lr.ph, %for.body
+  %loop_wrap1.04 = phi i64 [ 0, %for.body.lr.ph ], [ %inc, %for.body ]
+  %inc = add i64 %loop_wrap1.04, 1
+  store i32 %srcval1, i32* bitcast (%struct.adpcm_state* @state to i32*), align 4
+  call void @adpcm_coder(i16* getelementptr inbounds ([1000 x i16]* @sbuf, i64 0, i64 0), i8* getelementptr inbounds ([500 x i8]* @abuf, i64 0, i64 0), i32 %div, %struct.adpcm_state* @state) nounwind
+  %tmp20 = load i64* %loop_wrap2, align 8
+  %cmp21 = icmp slt i64 %inc, %tmp20
+  br i1 %cmp21, label %for.body, label %for.end
+
+for.end:                                          ; preds = %for.body, %for.cond.preheader
+  %div27 = sdiv i32 %conv, 4
+  %conv28 = sext i32 %div27 to i64
+  %call29 = call i64 @write(i32 1, i8* getelementptr inbounds ([500 x i8]* @abuf, i64 0, i64 0), i64 %conv28) nounwind
+  br label %while.body
+
+while.end:                                        ; preds = %if.end13
+  ret i32 0
+}
+
+declare noalias %struct._IO_FILE* @fopen(i8* nocapture, i8* nocapture) nounwind
+
+declare void @exit(i32) noreturn nounwind
+
+declare i32 @__isoc99_fscanf(%struct._IO_FILE*, i8*, ...)
+
+declare i32 @fclose(%struct._IO_FILE* nocapture) nounwind
+
+declare i64 @read(i32, i8* nocapture, i64)
+
+declare void @perror(i8* nocapture) nounwind
+
+declare void @adpcm_coder(i16*, i8*, i32, %struct.adpcm_state*)
+
+declare i64 @write(i32, i8* nocapture, i64)
+
+declare i64 @fwrite(i8* nocapture, i64, i64, %struct._IO_FILE* nocapture) nounwind

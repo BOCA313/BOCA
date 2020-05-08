@@ -1,0 +1,1 @@
+time ./a.out ../../automotive_susan_data/1.pgm output_large.corners.pgm -c > ftmp_out
