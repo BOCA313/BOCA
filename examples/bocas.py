@@ -169,6 +169,8 @@ def get_objective_score(independent,bench_name,seq):
         begin = time.time()
         print(cmd5)
         ret = os.system(cmd5)
+        if ret > 0:
+            continue
         print(ret)
         end = time.time()
         de = end - begin

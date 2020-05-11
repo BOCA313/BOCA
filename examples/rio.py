@@ -113,7 +113,9 @@ def get_objective_score(independent):
         print(cmd3)
         os.system(cmd3)
         begin = time.time()
-        os.system(cmd5)
+        ret = os.system(cmd5)
+        if ret > 0:
+            continue
         end = time.time()
         de = end - begin
         os.system(cmd4)
