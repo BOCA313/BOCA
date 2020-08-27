@@ -12,7 +12,7 @@ Under this folder, a .pdf file shows the results from 20th iteration to 60th ite
 
 ## Benchmarks
 
-CBench and Polybench programs are under the cbench and polybench directory.
+CBench, Polybench and Csmith programs are under the cbench, polybench and Csmith directory respectively.
 
 ## Source code
 
