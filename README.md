@@ -127,11 +127,11 @@ for file in cur_dir:
 		optcmd = 'opt -targetlibinfo -tti -S ' + file[:-1] + 'bc -o ' + file[:-1] + 'opt.bc'
 		llccmd = 'llc  -O2 -filetype=obj ' + file[:-1] + 'opt.bc -o ' + file[:-1] + 'o'
     
-    os.system(optcmd)
-    os.system(clangcmd)
+		os.system(optcmd)
+		os.system(clangcmd)
 		os.system(llccmd)
 
-cmd = 'clang   -O0 -scalarrepl -lm *.o 2> mute'
+cmd = 'clang   -O0 -scalarrepl -lm *.o'
 os.system(cmd)
 
 os.system('time ./a.out') # execute
@@ -150,9 +150,9 @@ for file in 3mm_dir:
 		optcmd = 'opt -targetlibinfo -tti -S ' + file_name + 'bc -o ' + file_name + 'opt.bc '
 		llccmd = 'llc  -O2 -filetype=obj ' + file_name + 'opt.bc -o ' + file_name + 'o '
 		
-    os.system(optcmd)
-    os.system(clangcmd)
-    os.system(llccmd)
+		os.system(optcmd)
+		os.system(clangcmd)
+		os.system(llccmd)
 cmd = 'clang -O0 -scalarrepl -lm *.o '
 os.system(cmd)
 ```
