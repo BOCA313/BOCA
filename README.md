@@ -87,11 +87,90 @@ Under `examples` directory, there are source codes written by us.
 
 They are examples showing commands we used to compile benchmark programs with C compilers (i.e., `GCC` and `LLVM`) .
 
-In `boca.py`, we compile and execute a program from Polybench by GCC compiler. 
+#### GCC
 
-In `ga.py`, we show how we test the approach on a program from CBench by GCC compiler.
+Compile `CBench` programs under current directory using `GCC` with optimization flag `-targetlibinfo` and `-tti` using command line.
 
-In  `rio.py` compiles and executes a program from Polybench by LLVM compiler. 
+```bash
+gcc -fbranch-count-reg -fcaller-saves -c *.c 
+gcc -fbranch-count-reg -fcaller-saves -lm *.o
+time ./a.out # execute
+```
+
+Compile `Polybench` programs `3mm` using `GCC` with optimization flag `-fbranch-count-reg` and`-fcaller-saves `using command line.
+
+```bash
+gcc -O2 -fbranch-count-reg -fcaller-saves -I utilities -I linear-algebra/kernels/3mm utilities/polybench.c linear-algebra/kernels/3mm/3mm.c -lm -DPOLYBENCH_TIME -o 3mm_time
+time ./3mm_time # execute
+```
+
+Compile `Csmith` program `test.c` using `GCC` with optimization flag `-fbranch-count-reg` and`-fcaller-saves` using command line.
+
+```bash
+gcc -g -Wall -std=c99 -O2 -fbranch-count-reg -fcaller-saves test.c -o a.out
+time ./a.out # execute
+```
+
+
+
+#### LLVM
+
+There are more steps to compile program(s) with `LLVM` than with `GCC` since the front, middle and back ends of `LLVM` are controlled by three commands instead of one.
+
+Compile `CBench` programs under current directory using LLVM with optimization flag `-targetlibinfo` and `-tti` using Python.
+
+```python
+for file in cur_dir:
+	if file.endswith('.c') and file.startswith('._') != True:
+
+		clangcmd = 'clang -O0 -scalarrepl  -emit-llvm -c -I./ ' + file + ' -o ' + file[:-1] + 'bc'	
+		optcmd = 'opt -targetlibinfo -tti -S ' + file[:-1] + 'bc -o ' + file[:-1] + 'opt.bc'
+		llccmd = 'llc  -O2 -filetype=obj ' + file[:-1] + 'opt.bc -o ' + file[:-1] + 'o'
+    
+    os.system(optcmd)
+    os.system(clangcmd)
+		os.system(llccmd)
+
+cmd = 'clang   -O0 -scalarrepl -lm *.o 2> mute'
+os.system(cmd)
+
+os.system('time ./a.out') # execute
+```
+
+Compile `Polybench` program `3mm` using `LLVM` with optimization flag `-targetlibinfo` and `-tti` using Python.
+
+```python
+files = os.listdir('./')
+files.append('../utilities/polybench.c')
+
+for file in 3mm_dir:
+	if file.endswith('.c') and file.startswith('._') != True:
+		file_name = file.split('/')[-1][:-1]
+		clangcmd = 'clang -O0 -scalarrepl  -emit-llvm -I ../utilities -I ./ -c ' + file + ' -o ' + file_name + 'bc '
+		optcmd = 'opt -targetlibinfo -tti -S ' + file_name + 'bc -o ' + file_name + 'opt.bc '
+		llccmd = 'llc  -O2 -filetype=obj ' + file_name + 'opt.bc -o ' + file_name + 'o '
+		
+    os.system(optcmd)
+    os.system(clangcmd)
+    os.system(llccmd)
+cmd = 'clang -O0 -scalarrepl -lm *.o '
+os.system(cmd)
+```
+
+Compile `Csmith` program `test.c` using `LLVM` with optimization flag `-targetlibinfo` and `-tti` using command line.
+
+```bash
+clang -O0 -emit-llvm -c -I./ test.c -o test.c.bc
+opt -targetlibinfo -tti -S test.c.bc -o test.c.opt.bc
+llc -O3 -filetype=obj test.c.opt.bc -o test.c.o
+clang -O0 -lm *.o 
+
+time ./a.out # execute
+```
+
+
+
+In `boca.py`, we compile and execute a program from Polybench by GCC compiler. In `ga.py`, we show how we test the approach on a program from CBench by GCC compiler. In  `rio.py` compiles and executes a program from Polybench by LLVM compiler. 
 
 All combinations of programs and compilers can be used in the experiment in a similar way to these examples.
 
