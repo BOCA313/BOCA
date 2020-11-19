@@ -107,7 +107,7 @@ time ./3mm_time # execute
 Compile `Csmith` program `trainprogram1.c` using `GCC` with optimization flag `-fbranch-count-reg` and`-fcaller-saves` using command line.
 
 ```bash
-gcc -g -Wall -std=c99 -O2 -fbranch-count-reg -fcaller-saves trainprogram1.c -o a.out
+gcc -g -Wall -std=c99 -O2 -fbranch-count-reg -fcaller-saves trainprogram1.c -I csmith_home/runtime -o a.out
 time ./a.out # execute
 ```
 
@@ -162,7 +162,7 @@ os.system('time ./a.out') # execute
 Compile `Csmith` program `test.c` using `LLVM` with optimization flag `-targetlibinfo` and `-tti` using command line.
 
 ```bash
-clang -O0 -emit-llvm -c -I./ trainprogram1.c -o trainprogram1.c.bc
+clang -O0 -emit-llvm -c -I csmith_home/runtime trainprogram1.c -o trainprogram1.c.bc
 opt -targetlibinfo -tti -S trainprogram1.c.bc -o trainprogram1.c.opt.bc
 llc -O3 -filetype=obj trainprogram1.c.opt.bc -o trainprogram1.c.o
 clang -O0 -lm *.o 
