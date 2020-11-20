@@ -59,6 +59,8 @@ Under the directory `flaglist`, there are two files: `gcc4flags.txt`,` llvmflags
 ### Result
 
 Under this folder, a .pdf file shows the results from 20th iteration to 60th iteration. In this file, a cross means that the approaches timed out in the experiment.
+Also, the optimal sequences of different programs are shown in important_flags.txt, where flags among the impactful ones are listed before those that are not impactful. The two kinds of flags are delimited by a "||".
+Raw_data_for_results.txt shows the speedups and time of different methods. The .pdf file is generated from this. In the header of this file, there are instructions explaining how to read the file.
 
 
 
