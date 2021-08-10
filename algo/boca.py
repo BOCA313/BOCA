@@ -29,12 +29,13 @@ class get_exchange(object):
         return ans
 
 class BOCA:
-    def __init__(self, s_dim, get_objective_score, no_decay,
+    def __init__(self, s_dim, get_objective_score, seed ,no_decay,
                  fnum=8, decay=0.5, scale=10, offset=20,
                  selection_strategy=['boca', 'local'][0],
                  budget=60, initial_sample_size=2):
         self.s_dim = s_dim
         self.get_objective_score = get_objective_score
+        self.seed = seed
 
         self.fnum = fnum  # FNUM, number of impactful option
         if no_decay:
@@ -116,7 +117,7 @@ class BOCA:
         # get rnum less-impactful sequences for each
         b2 = time.time()
         neighbors = []  # candidate seq
-        print('rnum: ' + str(rnum))
+        # print('rnum: ' + str(rnum))
         for i, inc in enumerate(neighborhood_iterators):
             for _ in range(1 + rnum):
                 flip_n = random.randint(0, self.s_dim)
@@ -167,8 +168,8 @@ class BOCA:
                 sort_merged_neighbor_ei = sorted(merged_neighbor_ei, key=lambda x: x[1], reverse=True )
                 max_n = sort_merged_neighbor_ei[0][0]
                 max_ei = sort_merged_neighbor_ei[0][1]
-                print(sort_merged_neighbor_ei)
-                print(max_n, max_ei)
+                # print(sort_merged_neighbor_ei)
+                # print(max_n, max_ei)
 
                 num += 1
                 if max_ei <= inc[1]:
@@ -190,13 +191,13 @@ class BOCA:
         return [[i, a] for a, i in zip(acq_val_incumbent, neighbors)]
 
     def get_training_sequence(self, training_indep, training_dep, eta, rnum):
-        model = RandomForestRegressor(random_state=456)
+        model = RandomForestRegressor(random_state=self.seed)
         model.fit(np.array(training_indep), np.array(training_dep))
 
         # get candidate seqs and corresponding EI
         begin = time.time()
         if self.selection_strategy == 'local':
-            print('local search')
+            # print('local search')
             estimators = model.estimators_
             preds = []
             for e in estimators:
@@ -206,19 +207,19 @@ class BOCA:
             configs_previous_runs_sorted = sorted(configs_previous_runs, key=lambda x: x[1], reverse=True)[:10]
             merged_predicted_objectives = self.local_search(model, eta, configs_previous_runs_sorted)
         else:
-            print('boca search')
+            # print('boca search')
             merged_predicted_objectives = self.boca_search(model, eta, rnum)
         merged_predicted_objectives = sorted(merged_predicted_objectives, key=lambda x: x[1], reverse=True)
         end = time.time()
-        print('search time: ' + str(begin - end))
-        print('rnum: ' + str(len(merged_predicted_objectives)))
+        print('search time: ' + str(end-begin))
+        print('num: ' + str(len(merged_predicted_objectives)))
 
         # return unique seq in candidate set with highest EI
         begin = time.time()
         for x in merged_predicted_objectives:
             if x[0] not in training_indep:
                 print('get unique seq, using ' + str(time.time() - begin)+' s.')
-                return x[0], x[1]
+                return x[0], x[1], len(merged_predicted_objectives)
 
     def run(self):
         """
@@ -260,7 +261,7 @@ class BOCA:
                 rnum = int(self.rnum0)
             rnum = int(rnum)
             # get best optimimzation sequence
-            best_solution, _ = self.get_training_sequence(training_indep, training_dep, global_best_dep, rnum)
+            best_solution, _, num = self.get_training_sequence(training_indep, training_dep, global_best_dep, rnum)
             ts.append(time.time()-begin)
 
             # add to training set, record time spent, score for this sequence
@@ -271,18 +272,14 @@ class BOCA:
                 global_best_dep = best_result
                 global_best_indep = best_solution
 
-            # ss = '{}-th best solution: score {}, time {} s, solution {}'.format(
-            #     str(len(training_dep)), str(best_result), str(ts[-1]), str(best_solution))
-            # write_log(ss,LOG_FILE)
-            #
-            # ss = 'global best solution: score {}, solution {}'.format(
-            #     str(global_best_dep), str(global_best_indep))
-            # write_log(ss, LOG_FILE)
-
-            ss = 'step {}, best {}, cur best{}, solution{}'.format(str(steps), str(global_best_dep), str(best_result),
-                                                                   str(best_solution))
+            ss = '{}: step {}, best {}, cur-best {}, independent-number {} , solution {}'.format(str(round(ts[-1])),
+                                                                                     str(steps),
+                                                                                     str(global_best_dep),
+                                                                                     str(best_result),
+                                                                                     str(num),
+                                                                                     str(best_solution))
             write_log(ss, LOG_FILE)
-
+        write_log(str(global_best_indep)+'\n=======================\n', LOG_FILE)
         return training_dep, ts
 
 

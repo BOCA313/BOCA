@@ -1,11 +1,7 @@
 # encoding: utf-8
 import os
 import random
-random.seed(456)
-from algo.executor import Executor, LOG_DIR
-from algo.boca import BOCA
 import argparse
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Args needed for BOCA tuning compiler.")
@@ -44,7 +40,7 @@ if __name__ == '__main__':
     #                     type=int, default=2**8, metavar='<num>')
     parser.add_argument('--decay',
                         help='Enable the decay process of BOCA, specify the speed of decay (0.5 by default).',
-                        default=0.5, metavar='<float in (0,1)>')
+                        default=0.5, type=float, metavar='<float in (0,1)>')
     parser.add_argument('--no-decay',
                         help='Disable the decay process of BOCA (enable by default).',
                         action='store_true')
@@ -63,9 +59,20 @@ if __name__ == '__main__':
     parser.add_argument('-b', '--budget',
                         help='Number of total instances, including initial sampled ones (60 by default).',
                         type=int, default=60, metavar='<budget>')
+    parser.add_argument('--seed',
+                        help='Fix <seed> for random process and model building.',
+                        type=int, default=456, metavar='<seed>')
+
+
+
 
 
     args = parser.parse_args()
+    if args.seed:
+        random.seed(args.seed)
+    from algo.executor import Executor, LOG_DIR
+    from algo.boca import BOCA
+
     if not os.path.exists(LOG_DIR):
         os.system('mkdir '+LOG_DIR)
 
@@ -104,6 +111,9 @@ if __name__ == '__main__':
     boca_params['selection_strategy'] = args.selection_strategy
     boca_params['budget'] = args.budget
     boca_params['initial_sample_size'] = args.initial_sample_size
+    if args.seed:
+        boca_params['seed'] = args.seed
+
 
     boca = BOCA(**boca_params)
 

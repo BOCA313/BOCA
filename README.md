@@ -114,6 +114,7 @@ optional arguments:
   -b <budget>, --budget <budget>
                         Number of total instances, including initial sampled
                         ones (60 by default).
+  --seed <seed>         Fix <seed> for random process and model building.
 ```
 * In order to tune `gcc-4.4`'s optimization for program `benchmarks/cbench/automotive_bitcount`, execute the following command:
 ```bash
