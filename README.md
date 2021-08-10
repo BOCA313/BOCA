@@ -1,6 +1,6 @@
 # Efficient Compiler Autotuning via Bayesian Optimization(BOCA)
 
-This is the implementation repository of our approach: **Efficient Compiler Autotuning via Bayesian Optimization**.
+This is the implementation version2.0 of our approach: **Efficient Compiler Autotuning via Bayesian Optimization**.
 
 ## Description
 
@@ -9,10 +9,7 @@ This is the implementation repository of our approach: **Efficient Compiler Auto
 ## Compilers/Benchmarks/Result
 
 ### Compilers/Benchmarks
-
 We used two most popular C compilers (i.e., `GCC` and `LLVM`) and two widely-used C benchmarks (i.e., `CBench` and `PolyBench`), which have been widely used in many existing studies. Also 5 Csmith generated programs. 
-
-
 
 | Compiler | Version | Optimization flags number |
 | -------- | ------- | ------------------------- |
@@ -21,7 +18,6 @@ We used two most popular C compilers (i.e., `GCC` and `LLVM`) and two widely-use
 | GCC      | 8.3.1   | 86                        |
 
 Under the directory `flaglist`, there are two files: `gcc4flags.txt`,` llvmflags.txt` and  `gcc8flags.txt`, which contain flags used for `GCC` compiler and for `LLVM` compiler seperately.
-
 
 
 | ID      | Program             | Number of Source Lines of Code |
@@ -54,127 +50,112 @@ Under the directory `flaglist`, there are two files: `gcc4flags.txt`,` llvmflags
 
 `CBench`, `Polybench` and `5 Csmith programs` are under the `cbench`, `polybench` and `Csmith` directory respectively.
 
-
-
 ### Result
 
 Under this folder, a .pdf file shows the results from 20th iteration to 60th iteration. In this file, a cross means that the approaches timed out in the experiment.
 Also, the optimal sequences of different programs are shown in important_flags.txt, where flags among the impactful ones are listed before those that are not impactful. The two kinds of flags are delimited by a "||".
 Raw_data_for_results.txt shows the speedups and time of different methods. The .pdf file is generated from this. In the header of this file, there are instructions explaining how to read the file.
 
+## Usage 
 
+### Dependencies
+* numpy == 1.19.2
+* scikit_learn == 0.22.1
+* scipy == 1.6.2
 
-## Reproducibility
-
-### Environment
-
-Our study is conducted on a workstation with 16- core Intel(R) Xeon(R) CPU E5-2640 v3, 126G memory, and CentOS 6.10 operating system. (**Note: in docker environment**)
-
-### Source code
-
-Under `examples` directory, there are source codes written by us. 
-
-| script     | Description                                                  |
-| ---------- | ------------------------------------------------------------ |
-| `boca.py`  | Compiler Autotuning via Bayesian Optimization.               |
-| `bocas.py` | BOCA with the local search strategy used in SMAC.            |
-| `ga.py`    | Genetic Algorithm based Iterative Optimization (initial size of 4). |
-| `irace.py` | Irace-based Iterative Optimization.                          |
-| `rio.py`   | Random Iterative Optimization.                               |
-| `tpe.py`   | an advanced general Bayesian optimization.                   |
-
-
-
-### Compile with GCC/LLVM
-
-They are examples showing commands we used to compile benchmark programs with C compilers (i.e., `GCC` and `LLVM`) .
-
-#### GCC
-
-Compile `CBench` programs under current directory using `GCC` with optimization flag `-targetlibinfo` and `-tti` using command line.
-
+### Installation
 ```bash
-gcc -fbranch-count-reg -fcaller-saves -c *.c 
-gcc -fbranch-count-reg -fcaller-saves -lm *.o
-time ./a.out # execute
+pip3 install -r requirements.txt
 ```
 
-Compile `Polybench` programs `3mm` using `GCC` with optimization flag `-fbranch-count-reg` and`-fcaller-saves `using command line.
-
+### How to run
 ```bash
-gcc -O2 -fbranch-count-reg -fcaller-saves -I utilities -I linear-algebra/kernels/3mm utilities/polybench.c linear-algebra/kernels/3mm/3mm.c -lm -DPOLYBENCH_TIME -o 3mm_time
-time ./3mm_time # execute
+usage: main.py [-h] --bin-path <directory> --driver <bin> --linker <bin>
+               [--libs [<options> [<options> ...]]] [-o <file>]
+               [-p <options> [<options> ...]] -src <directory> [-f <num>]
+               [--decay <float in 0,1>] [--no-decay] [--scale <num>]
+               [--offset <num>] [-S {boca,local}] [-sz <size>] [-b <budget>]
+
+Args needed for BOCA tuning compiler.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --bin-path <directory>
+                        Specify path to compilation tools.
+  --driver <bin>        Specify name of compiler-driver.
+  --linker <bin>        Specify name of linker.
+  --libs [<options> [<options> ...]]
+                        Pass comma-separated <options> on to the compiler-
+                        driver.
+  -o <file>, --output <file>
+                        Write output to <file>.
+  -p <options> [<options> ...], --execute-params <options> [<options> ...]
+                        Pass comma-separated <options> on to the executable
+                        file.
+  -src <directory>, --src-dir <directory>
+                        Specify path to the source file.
+  -f <num>, --fnum <num>
+                        Specify number of impactful options of BOCA (8 by
+                        default).
+  --decay <float in (0,1)>
+                        Enable the decay process of BOCA, specify the speed of
+                        decay (0.5 by default).
+  --no-decay            Disable the decay process of BOCA (enable by default).
+  --scale <num>         Specify the scale of the decay process (10 by
+                        default).
+  --offset <num>        Specify the offset of the decay process (20 by
+                        default).
+  -S {boca,local}, --selection-strategy {boca,local}
+                        Specify the selection strategy of BOCA (boca search by
+                        default).
+  -sz <size>, --initial-sample-size <size>
+                        Specify the initial sample size of BOCA (2 by
+                        default).
+  -b <budget>, --budget <budget>
+                        Number of total instances, including initial sampled
+                        ones (60 by default).
 ```
-
-Compile `Csmith` program `trainprogram1.c` using `GCC` with optimization flag `-fbranch-count-reg` and`-fcaller-saves` using command line.
-
+* In order to tune `gcc-4.4`'s optimization for program `benchmarks/cbench/automotive_bitcount`, execute the following command:
 ```bash
-gcc -g -Wall -std=c99 -O2 -fbranch-count-reg -fcaller-saves trainprogram1.c -I csmith_home/runtime -o a.out
-time ./a.out # execute
+python3 main.py --bin-path /gcc-lib/bin --driver gcc-4.4 --linker gcc-4.4 --src-dir 'benchmarks/cbench/automotive_bitcount' --execute-params 20
 ```
-
-
-
-#### LLVM
-
-There are more steps to compile program(s) with `LLVM` than with `GCC` since the front, middle and back ends of `LLVM` are controlled by three commands instead of one.
-
-Compile `CBench` programs under current directory using LLVM with optimization flag `-targetlibinfo` and `-tti` using Python.
-
-```python
-for file in cur_dir:
-	if file.endswith('.c') and file.startswith('._') != True:
-
-		clangcmd = 'clang -O0 -scalarrepl  -emit-llvm -c -I./ ' + file + ' -o ' + file[:-1] + 'bc'	
-		optcmd = 'opt -targetlibinfo -tti -S ' + file[:-1] + 'bc -o ' + file[:-1] + 'opt.bc'
-		llccmd = 'llc  -O2 -filetype=obj ' + file[:-1] + 'opt.bc -o ' + file[:-1] + 'o'
-    
-		os.system(optcmd)
-		os.system(clangcmd)
-		os.system(llccmd)
-
-cmd = 'clang   -O0 -scalarrepl -lm *.o'
-os.system(cmd)
-
-os.system('time ./a.out') # execute
-```
-
-Compile `Polybench` program `3mm` using `LLVM` with optimization flag `-targetlibinfo` and `-tti` using Python.
-
-```python
-files = os.listdir('./')
-files.append('../utilities/polybench.c')
-
-for file in 3mm_dir:
-	if file.endswith('.c') and file.startswith('._') != True:
-		file_name = file.split('/')[-1][:-1]
-		clangcmd = 'clang -O0 -scalarrepl  -emit-llvm -I ../utilities -I ./ -c ' + file + ' -o ' + file_name + 'bc '
-		optcmd = 'opt -targetlibinfo -tti -S ' + file_name + 'bc -o ' + file_name + 'opt.bc '
-		llccmd = 'llc  -O2 -filetype=obj ' + file_name + 'opt.bc -o ' + file_name + 'o '
-		
-		os.system(optcmd)
-		os.system(clangcmd)
-		os.system(llccmd)
-cmd = 'clang -O0 -scalarrepl -lm *.o '
-os.system(cmd) 
-
-os.system('time ./a.out') # execute
-```
-
-Compile `Csmith` program `test.c` using `LLVM` with optimization flag `-targetlibinfo` and `-tti` using command line.
-
+* if you want to get a good `clang-3.8` optimization sequence for program `3mm` in `polybench` without decay, execute the followoing:
 ```bash
-clang -O0 -emit-llvm -c -I csmith_home/runtime trainprogram1.c -o trainprogram1.c.bc
-opt -targetlibinfo -tti -S trainprogram1.c.bc -o trainprogram1.c.opt.bc
-llc -O3 -filetype=obj trainprogram1.c.opt.bc -o trainprogram1.c.o
-clang -O0 -lm *.o 
-
-time ./a.out # execute
+python3 main.py --bin-path /usr/bin/ --driver clang-3.8 --linker clang-3.8 --src-dir 'benchmarks/polybench/linear-algebra/kernels/3mm' --libs '-I benchmarks/polybench/utilities benchmarks/polybench/utilities/polybench.c'
 ```
-
-
-
-In `boca.py`, we compile and execute a program from Polybench by GCC compiler. In `ga.py`, we show how we test the approach on a program from CBench by GCC compiler. In  `rio.py` compiles and executes a program from Polybench by LLVM compiler. 
 
 All combinations of programs and compilers can be used in the experiment in a similar way to these examples.
 
+## Structure
+```
+|-- algo
+|   |-- boca.py
+|   |-- executor.py
+|
+|-- benchmarks
+|   |-- cbench
+|   |-- CSmith
+|   |-- polybench
+|
+|-- examples
+|   |-- boca.py
+|   |-- bocas.py
+|   |-- ga.py
+|   |-- irace.py
+|   |-- rio.py
+|   |-- tpe.py
+|
+|-- results
+|   |-- flaglist
+|   |
+|   |-- raw_data_for_results.txt
+|   |-- important_flags.txt
+|   |-- results.pdf
+|
+|-- README.md
+|-- main.py
+```
+1. `algo` directory contains BOCA_v2.0 source code.
+2. `benchmarks` directory contains two widely-used C benchmarks (i.e., CBench and PolyBench), which have been widely used in many existing studies. Also 5 Csmith generated programs.
+3. Under `examples` directory, there are source codes written by us.
+4. `results` directory contains detailed results of our experiment.

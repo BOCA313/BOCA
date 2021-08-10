@@ -1,7 +1,7 @@
 # encoding: utf-8
 from .executor import LOG_FILE, write_log
 # from .executor import LOG_FILE, write_log
-import os, random, time, copy
+import random, time, copy
 import math
 from sklearn.ensemble import RandomForestRegressor
 import numpy as np
@@ -11,7 +11,7 @@ TODO:
 1. set environment instead of member various
 2. check compilation method
 """
-
+fix_rt_log = 'log/fix_rt.log'
 
 class get_exchange(object):
     def __init__(self, incumbent):
@@ -190,7 +190,7 @@ class BOCA:
         return [[i, a] for a, i in zip(acq_val_incumbent, neighbors)]
 
     def get_training_sequence(self, training_indep, training_dep, eta, rnum):
-        model = RandomForestRegressor()
+        model = RandomForestRegressor(random_state=456)
         model.fit(np.array(training_indep), np.array(training_dep))
 
         # get candidate seqs and corresponding EI
@@ -233,15 +233,20 @@ class BOCA:
         while len(training_indep) < self.initial_sample_size:
             x = random.randint(0, 2**self.s_dim)
             initial_training_instance = self.generate_random_conf(x)
-            print(x, 2**self.s_dim,initial_training_instance)
+            # print(x, 2**self.s_dim,initial_training_instance)
 
             if initial_training_instance not in training_indep:
                 training_indep.append(initial_training_instance)
                 ts.append(time.time() - begin)
 
         training_dep = [self.get_objective_score(indep, k_iter=0) for indep in training_indep]
-        steps = 0 
-        global_best_result = max(training_dep)  # best objective score
+        write_log(str(training_dep), LOG_FILE)
+        steps = 0
+        merge = zip(training_indep, training_dep)
+        merge_sort = [[indep, dep] for indep, dep in merge]
+        merge_sort = sorted(merge_sort, key=lambda m: abs(m[1]), reverse=True)
+        global_best_dep = merge_sort[0][1]  # best objective score
+        global_best_indep = merge_sort[0][0]  # corresponding indep
         if self.decay:
             sigma = -self.scale ** 2 / (2 * math.log(self.decay))  # sigma = - scale^2 / 2*log(decay)
         else:
@@ -255,19 +260,28 @@ class BOCA:
                 rnum = int(self.rnum0)
             rnum = int(rnum)
             # get best optimimzation sequence
-            best_solution, _ = self.get_training_sequence(training_indep, training_dep, global_best_result, rnum)
+            best_solution, _ = self.get_training_sequence(training_indep, training_dep, global_best_dep, rnum)
             ts.append(time.time()-begin)
 
             # add to training set, record time spent, score for this sequence
             training_indep.append(best_solution)
-            best_result = self.get_objective_score(best_solution)
+            best_result = self.get_objective_score(best_solution, k_iter=(self.initial_sample_size+steps))
             training_dep.append(best_result)
-            if best_result > global_best_result:
-                global_best_result = best_result
+            if abs(best_result) > abs(global_best_dep):
+                global_best_dep = best_result
+                global_best_indep = best_solution
 
-            ss = '{}-th best solution: score {}, time {} s, solution {}'.format(
-                str(len(training_dep)), str(best_result), str(best_solution))
-            write_log(ss,LOG_FILE)
+            # ss = '{}-th best solution: score {}, time {} s, solution {}'.format(
+            #     str(len(training_dep)), str(best_result), str(ts[-1]), str(best_solution))
+            # write_log(ss,LOG_FILE)
+            #
+            # ss = 'global best solution: score {}, solution {}'.format(
+            #     str(global_best_dep), str(global_best_indep))
+            # write_log(ss, LOG_FILE)
+
+            ss = 'step {}, best {}, cur best{}, solution{}'.format(str(steps), str(global_best_dep), str(best_result),
+                                                                   str(best_solution))
+            write_log(ss, LOG_FILE)
 
         return training_dep, ts
 
