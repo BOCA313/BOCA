@@ -148,7 +148,6 @@ All combinations of programs and compilers can be used in the experiment in a si
 |
 |-- results
 |   |-- flaglist
-|   |
 |   |-- raw_data_for_results.txt
 |   |-- important_flags.txt
 |   |-- results.pdf
