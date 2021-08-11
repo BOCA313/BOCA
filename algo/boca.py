@@ -1,17 +1,10 @@
 # encoding: utf-8
 from .executor import LOG_FILE, write_log
-# from .executor import LOG_FILE, write_log
 import random, time, copy
 import math
 from sklearn.ensemble import RandomForestRegressor
 import numpy as np
 from scipy.stats import norm
-"""
-TODO: 
-1. set environment instead of member various
-2. check compilation method
-"""
-fix_rt_log = 'log/fix_rt.log'
 
 class get_exchange(object):
     def __init__(self, incumbent):

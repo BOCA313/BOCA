@@ -237,7 +237,7 @@ class Executor:
         write_log(op_str, LOG_FILE)
         return np.median(speedups)
 
-    def get_objective_score_fix(self, independent, k_iter, n_eval=5, fail_toleration=10):
+    def get_objective_score_test(self, independent, k_iter, n_eval=5, fail_toleration=10):
         flag = -1
         if k_iter % 2 == 0:
             flag = 1

@@ -102,7 +102,7 @@ if __name__ == '__main__':
 
     boca_params['s_dim'] = len(tuning_list)
     boca_params['get_objective_score'] = e.get_objective_score
-    # boca_params['get_objective_score']=e.get_objective_score_fix
+    # boca_params['get_objective_score']=e.get_objective_score_test
     boca_params['fnum'] = args.fnum
     boca_params['decay'] = args.decay
     boca_params['no_decay'] = args.no_decay
